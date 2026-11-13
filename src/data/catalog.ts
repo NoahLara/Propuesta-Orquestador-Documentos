@@ -1,0 +1,347 @@
+import type { DocCategory, DocTemplate, Guarantee, PersonType, Process, Product, RiskLevel } from '../types';
+
+const ALL_PEOPLE: PersonType[] = ['natural', 'juridica'];
+const ALL_PRODUCTS: Product[] = ['credito-mype', 'microfinanzas-verdes', 'vivienda'];
+const ALL_RISKS: RiskLevel[] = ['bajo', 'medio', 'alto'];
+const ALL_PROCESSES: Process[] = ['vinculacion', 'renovacion', 'otorgamiento'];
+const ALL_GUARANTEES: Guarantee[] = ['fiduciaria', 'prendaria', 'hipotecaria', 'solidaria'];
+
+/**
+ * Catálogo maestro de documentos. Las reglas de aplicabilidad son la base del
+ * motor de checklist: al cambiar un filtro, se recalcula qué documentos aplican.
+ * Los días de vigencia pueden ser sobreescritos por el Configurador No-Code.
+ */
+export const DOCUMENT_CATALOG: DocTemplate[] = [
+  {
+    code: 'DUI',
+    name: 'Documento Único de Identidad (DUI)',
+    description: 'Identificación oficial vigente del titular o representante legal.',
+    category: 'Identidad',
+    internalDays: 90,
+    legalDays: 3650,
+    critical: true,
+    applies: { personTypes: ['natural'], products: ALL_PRODUCTS },
+  },
+  {
+    code: 'NIT',
+    name: 'Tarjeta de Identificación Tributaria (NIT)',
+    description: 'NIT del cliente, persona natural o jurídica.',
+    category: 'Identidad',
+    internalDays: 180,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS },
+  },
+  {
+    code: 'CONSTANCIA_NIT',
+    name: 'Constancia de NIT — Ministerio de Hacienda',
+    description: 'Constancia de inscripción y actualización emitida por Hacienda.',
+    category: 'Legal',
+    internalDays: 60,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS },
+  },
+  {
+    code: 'PASAPORTE',
+    name: 'Pasaporte vigente',
+    description: 'Documento alterno de identidad para operaciones de riesgo alto.',
+    category: 'Identidad',
+    internalDays: 90,
+    legalDays: 3650,
+    applies: {
+      personTypes: ['natural'],
+      products: ALL_PRODUCTS,
+      risks: ['alto'],
+    },
+  },
+  {
+    code: 'ESCRITURA_CONSTITUCION',
+    name: 'Escritura de constitución',
+    description: 'Instrumento público de constitución de la sociedad y sus reformas.',
+    category: 'Legal',
+    internalDays: 3650,
+    critical: true,
+    applies: { personTypes: ['juridica'], products: ALL_PRODUCTS },
+  },
+  {
+    code: 'ACTA_REPRESENTANTE',
+    name: 'Acta de nombramiento de representante legal',
+    description: 'Acta inscrita que acredita las facultades del representante.',
+    category: 'Legal',
+    internalDays: 3650,
+    critical: true,
+    applies: { personTypes: ['juridica'], products: ALL_PRODUCTS },
+  },
+  {
+    code: 'PODER_REPRESENTACION',
+    name: 'Poder de representación',
+    description: 'Poder especial o general para obligar a la sociedad.',
+    category: 'Legal',
+    internalDays: 3650,
+    applies: {
+      personTypes: ['juridica'],
+      products: ALL_PRODUCTS,
+      processes: ['vinculacion', 'otorgamiento', 'renovacion'],
+    },
+  },
+  {
+    code: 'NOMINA_ACCIONISTAS',
+    name: 'Nómina de accionistas y beneficiarios finales',
+    description: 'Detalle de composición accionaria y beneficiario final declarado.',
+    category: 'Legal',
+    internalDays: 365,
+    applies: {
+      personTypes: ['juridica'],
+      products: ALL_PRODUCTS,
+      risks: ['medio', 'alto'],
+    },
+  },
+  {
+    code: 'MATRICULA_COMERCIO',
+    name: 'Matrícula de comercio',
+    description: 'Matrícula vigente emitida por el Registro de Comercio.',
+    category: 'Comercial',
+    internalDays: 365,
+    applies: { personTypes: ['juridica'], products: ALL_PRODUCTS },
+  },
+  {
+    code: 'LICENCIA_FUNCIONAMIENTO',
+    name: 'Licencia de funcionamiento',
+    description: 'Permiso municipal de operación del establecimiento.',
+    category: 'Comercial',
+    internalDays: 365,
+    applies: {
+      personTypes: ['juridica'],
+      products: ['credito-mype', 'microfinanzas-verdes'],
+    },
+  },
+  {
+    code: 'BALANCE_GENERAL',
+    name: 'Balance general',
+    description: 'Estados financieros auditados o firmados por contador.',
+    category: 'Financiero',
+    internalDays: 120,
+    critical: true,
+    applies: { personTypes: ALL_PEOPLE, products: ['credito-mype', 'microfinanzas-verdes'] },
+  },
+  {
+    code: 'ESTADO_RESULTADOS',
+    name: 'Estado de resultados',
+    description: 'Estado de pérdidas y ganancias del último ejercicio o corte.',
+    category: 'Financiero',
+    internalDays: 120,
+    applies: { personTypes: ALL_PEOPLE, products: ['credito-mype', 'microfinanzas-verdes'] },
+  },
+  {
+    code: 'DECLARACION_IVA',
+    name: 'Declaración de IVA',
+    description: 'Declaración tributaria de los últimos tres periodos.',
+    category: 'Financiero',
+    internalDays: 90,
+    applies: { personTypes: ['juridica'], products: ['credito-mype'] },
+  },
+  {
+    code: 'FLUJO_CAJA',
+    name: 'Flujo de caja proyectado',
+    description: 'Proyección de flujo de caja a 12 meses del negocio.',
+    category: 'Financiero',
+    internalDays: 45,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ['credito-mype', 'microfinanzas-verdes'],
+      processes: ['renovacion', 'otorgamiento'],
+    },
+  },
+  {
+    code: 'CONSTANCIA_INGRESOS',
+    name: 'Constancia de ingresos',
+    description: 'Constancia laboral o de ingresos del solicitante.',
+    category: 'Financiero',
+    internalDays: 30,
+    critical: true,
+    applies: {
+      personTypes: ['natural'],
+      products: ALL_PRODUCTS,
+      processes: ['vinculacion', 'renovacion', 'otorgamiento'],
+    },
+  },
+  {
+    code: 'ESTADOS_CUENTA',
+    name: 'Estados de cuenta bancarios',
+    description: 'Últimos seis meses de movimientos en cuenta.',
+    category: 'Financiero',
+    internalDays: 30,
+    critical: true,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS },
+  },
+  {
+    code: 'REFERENCIAS_COMERCIALES',
+    name: 'Referencias comerciales',
+    description: 'Dos referencias de proveedores o clientes del negocio.',
+    category: 'Comercial',
+    internalDays: 90,
+    applies: { personTypes: ALL_PEOPLE, products: ['credito-mype'] },
+  },
+  {
+    code: 'REFERENCIAS_BANCARIAS',
+    name: 'Referencias bancarias',
+    description: 'Referencias de entidades financieras locales.',
+    category: 'Comercial',
+    internalDays: 90,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS },
+  },
+  {
+    code: 'COMPROBANTE_DOMICILIO',
+    name: 'Comprobante de domicilio',
+    description: 'Recibo de energía, agua o alquiler de los últimos 60 días.',
+    category: 'Comercial',
+    internalDays: 60,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS },
+  },
+  {
+    code: 'ORIGEN_FONDOS',
+    name: 'Declaración de origen de fondos',
+    description: 'Declaración jurada de origen lícito de los recursos.',
+    category: 'PLAFT',
+    internalDays: 30,
+    critical: true,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ALL_PRODUCTS,
+      risks: ['medio', 'alto'],
+    },
+  },
+  {
+    code: 'KYC',
+    name: 'Formulario Conoce a tu Cliente (KYC)',
+    description: 'Formulario de conocimiento del cliente y perfil transaccional.',
+    category: 'PLAFT',
+    internalDays: 365,
+    critical: true,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS },
+  },
+  {
+    code: 'LISTAS_RESTRICTIVAS',
+    name: 'Verificación de listas restrictivas',
+    description: 'Cotejo contra listas OFAC, ONU y listas internas del Banco.',
+    category: 'PLAFT',
+    internalDays: 15,
+    critical: true,
+    applies: { personTypes: ALL_PEOPLE, products: ALL_PRODUCTS, risks: ['alto'] },
+  },
+  {
+    code: 'PERMISO_AMBIENTAL',
+    name: 'Permiso ambiental (MARN)',
+    description: 'Resolución ambiental aplicable al proyecto financiado.',
+    category: 'Legal',
+    internalDays: 365,
+    applies: { personTypes: ['juridica'], products: ['microfinanzas-verdes'] },
+  },
+  {
+    code: 'CERTIFICACION_VERDE',
+    name: 'Certificación de proyecto verde',
+    description: 'Ficha técnica que acredita elegibilidad de la inversión verde.',
+    category: 'Comercial',
+    internalDays: 180,
+    applies: { personTypes: ALL_PEOPLE, products: ['microfinanzas-verdes'] },
+  },
+  {
+    code: 'AVALUO',
+    name: 'Avalúo técnico del inmueble',
+    description: 'Avalúo emitido por perito registrado en el Banco.',
+    category: 'Garantías',
+    internalDays: 180,
+    legalDays: 365,
+    critical: true,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ALL_PRODUCTS,
+      guarantees: ['hipotecaria'],
+    },
+  },
+  {
+    code: 'GRAVAMENES',
+    name: 'Certificado de gravámenes',
+    description: 'Certificación del Registro de la Propiedad sobre el inmueble.',
+    category: 'Garantías',
+    internalDays: 30,
+    legalDays: 30,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ALL_PRODUCTS,
+      guarantees: ['hipotecaria'],
+    },
+  },
+  {
+    code: 'ESCRITURA_PROPIEDAD',
+    name: 'Escritura de propiedad',
+    description: 'Título de propiedad inscribo a favor del cliente o fiador.',
+    category: 'Garantías',
+    internalDays: 3650,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ALL_PRODUCTS,
+      guarantees: ['hipotecaria'],
+    },
+  },
+  {
+    code: 'CONTRATO_PRENDA',
+    name: 'Contrato de prenda e inventario',
+    description: 'Contrato e inventario de bienes muebles dados en garantía.',
+    category: 'Garantías',
+    internalDays: 365,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ALL_PRODUCTS,
+      guarantees: ['prendaria'],
+    },
+  },
+  {
+    code: 'FIANZA_SOLIDARIA',
+    name: 'Fianza solidaria',
+    description: 'Fianza mancomunada y solidaria del codeudor.',
+    category: 'Garantías',
+    internalDays: 365,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ALL_PRODUCTS,
+      guarantees: ['solidaria'],
+    },
+  },
+  {
+    code: 'PLAN_NEGOCIOS',
+    name: 'Plan de negocios',
+    description: 'Plan de inversión y destino del crédito solicitado.',
+    category: 'Comercial',
+    internalDays: 180,
+    applies: {
+      personTypes: ALL_PEOPLE,
+      products: ['credito-mype'],
+      processes: ['otorgamiento'],
+    },
+  },
+  {
+    code: 'REFERENCIA_LABORAL',
+    name: 'Carta de referencia laboral',
+    description: 'Carta del patrono con antigüedad y salario del solicitante.',
+    category: 'Comercial',
+    internalDays: 60,
+    applies: {
+      personTypes: ['natural'],
+      products: ['vivienda'],
+      processes: ['vinculacion', 'otorgamiento'],
+    },
+  },
+];
+
+export const CATALOG_BY_CODE: Record<string, DocTemplate> = Object.fromEntries(
+  DOCUMENT_CATALOG.map((doc) => [doc.code, doc]),
+);
+
+export const CATEGORY_ORDER: DocCategory[] = [
+  'Identidad',
+  'Legal',
+  'Financiero',
+  'Comercial',
+  'Garantías',
+  'PLAFT',
+];
+
+export const ALL_GUARANTEES_LIST = ALL_GUARANTEES;
